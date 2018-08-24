@@ -142,6 +142,13 @@ var global = this
     return lastRequire
   }
 
+  /*
+   定义方法
+   
+   @param methods 旧方法
+   @param newMethods 新方法
+   @param realClsName 类名
+   */
   var _formatDefineMethods = function(methods, newMethods, realClsName) {
     for (var methodName in methods) {
       if (!(methods[methodName] instanceof Function)) return;
@@ -184,6 +191,7 @@ var global = this
     }
   }
 
+  // 属性getter方法
   var _propertiesGetFun = function(name){
     return function(){
       var slf = this;
@@ -199,6 +207,7 @@ var global = this
     };
   }
 
+  // 属性setter方法
   var _propertiesSetFun = function(name){
     return function(jval){
       var slf = this;
@@ -214,19 +223,31 @@ var global = this
     };
   }
 
+  /*
+   定义对象
+   
+   @param declaration 声明 'JPTableViewController : UITableViewController <UIAlertViewDelegate>'
+   @param properties 属性 ['data']
+   @param instMethods 实例方法 { handleBtn: function(sender) {} }
+   @param clsMethods 类方法
+   */
   global.defineClass = function(declaration, properties, instMethods, clsMethods) {
     var newInstMethods = {}, newClsMethods = {}
+    // 如果properties不是数组类型 参数提前一位
     if (!(properties instanceof Array)) {
       clsMethods = instMethods
       instMethods = properties
       properties = null
     }
 
+    // 如果有属性数组就遍历
     if (properties) {
       properties.forEach(function(name){
+        // 没有getter方法就增加getter方法
         if (!instMethods[name]) {
           instMethods[name] = _propertiesGetFun(name);
         }
+        // 没有setter方法，就添加setter方法
         var nameOfSet = "set"+ name.substr(0,1).toUpperCase() + name.substr(1);
         if (!instMethods[nameOfSet]) {
           instMethods[nameOfSet] = _propertiesSetFun(name);
@@ -234,6 +255,7 @@ var global = this
       });
     }
 
+    // 获取类名
     var realClsName = declaration.split(':')[0].trim()
 
     _formatDefineMethods(instMethods, newInstMethods, realClsName)

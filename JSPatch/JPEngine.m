@@ -551,6 +551,7 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
 {
     NSScanner *scanner = [NSScanner scannerWithString:classDeclaration];
     
+    // 获取到类名 父类名 协议名
     NSString *className;
     NSString *superClassName;
     NSString *protocolNames;
@@ -570,7 +571,9 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
     
     NSArray *protocols = [protocolNames length] ? [protocolNames componentsSeparatedByString:@","] : nil;
     
+    // 字符串解析完毕 开始反射
     Class cls = NSClassFromString(className);
+    // 如果不是已有的类，就根据父类注册一个新类
     if (!cls) {
         Class superCls = NSClassFromString(superClassName);
         if (!superCls) {
@@ -581,6 +584,7 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
         objc_registerClassPair(cls);
     }
     
+    // 加上protocol
     if (protocols.count > 0) {
         for (NSString* protocolName in protocols) {
             Protocol *protocol = objc_getProtocol([trim(protocolName) cStringUsingEncoding:NSUTF8StringEncoding]);
@@ -588,11 +592,13 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
         }
     }
     
+    // 第一遍加实例方法 第二遍加类方法
     for (int i = 0; i < 2; i ++) {
         BOOL isInstance = i == 0;
         JSValue *jsMethods = isInstance ? instanceMethods: classMethods;
         
         Class currCls = isInstance ? cls: objc_getMetaClass(className.UTF8String);
+        // 方法是方法名加上数组 数组内第一个参数是方法参数个数
         NSDictionary *methodDict = [jsMethods toDictionary];
         for (NSString *jsMethodName in methodDict.allKeys) {
             JSValue *jsMethodArr = [jsMethods valueForProperty:jsMethodName];
@@ -1758,6 +1764,8 @@ static BOOL blockTypeIsScalarPointer(NSString *typeString)
             !NSClassFromString(typeWithoutAsterisk));
 }
 
+// alertView_willDismissWithButtonIndex => alertView:willDismissWithButtonIndex
+// "__"双下划线代替成"_"单下划线，"_"单下划线代替成":"
 static NSString *convertJPSelectorString(NSString *selectorString)
 {
     NSString *tmpJSMethodName = [selectorString stringByReplacingOccurrencesOfString:@"__" withString:@"-"];
