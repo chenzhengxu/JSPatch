@@ -42,6 +42,7 @@ var global = this
     return obj
   }
   
+  // js调用oc方法
   var _methodFunc = function(instance, clsName, methodName, args, isSuper, isPerformSelector) {
     var selectorName = methodName
     if (!isPerformSelector) {
@@ -119,6 +120,7 @@ var global = this
     }
   }
 
+  // JS全局作用域上创建一个同名变量，变量指向一个对象，对象属性 __clsName 保存类名，同时表明这个对象是一个 OC Class。
   var _require = function(clsName) {
     if (!global[clsName]) {
       global[clsName] = {
@@ -128,10 +130,12 @@ var global = this
     return global[clsName]
   }
 
+  // 定义全局的require方法
   global.require = function() {
     var lastRequire
     for (var i = 0; i < arguments.length; i ++) {
       arguments[i].split(',').forEach(function(clsName) {
+        // 拆分参数，实际调用内部的_require方法
         lastRequire = _require(clsName.trim())
       })
     }

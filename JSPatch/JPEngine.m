@@ -359,6 +359,7 @@ static void (^_exceptionBlock)(NSString *log) = ^void(NSString *log) {
     }
     [self startEngine];
     
+    // 运行脚本前使用正则在方法名前面拼上"__c"
     if (!_regex) {
         _regex = [NSRegularExpression regularExpressionWithPattern:_regexStr options:0 error:nil];
     }
@@ -1016,6 +1017,8 @@ static void overrideMethod(Class cls, NSString *selectorName, JSValue *function,
 }
 
 #pragma mark -
+
+// js调用oc方法
 static id callSelector(NSString *className, NSString *selectorName, JSValue *arguments, JSValue *instance, BOOL isSuper)
 {
     NSString *realClsName = [[instance valueForProperty:@"__realClsName"] toString];

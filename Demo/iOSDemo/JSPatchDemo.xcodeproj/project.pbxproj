@@ -129,6 +129,7 @@
 		3660BC2C1E2634C900DB3765 /* JPBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPBlock.m; sourceTree = "<group>"; };
 		367650461E2CC3BD00828E12 /* JPBlockWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPBlockWrapper.h; sourceTree = "<group>"; };
 		367650471E2CC3BD00828E12 /* JPBlockWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPBlockWrapper.m; sourceTree = "<group>"; };
+		3690EE70212FE1DB0043AF09 /* demo_regex.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = demo_regex.js; sourceTree = "<group>"; };
 		3694925C1CFEFE42003F44CA /* JPCFunctionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPCFunctionTest.h; sourceTree = "<group>"; };
 		3694925D1CFEFE42003F44CA /* JPCFunctionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPCFunctionTest.m; sourceTree = "<group>"; };
 		3694925E1CFEFE42003F44CA /* jsCFunctionTest.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jsCFunctionTest.js; sourceTree = "<group>"; };
@@ -244,6 +245,7 @@
 				2D5D891D1B0B8BFF009382EC /* JPViewController.h */,
 				2D5D891E1B0B8BFF009382EC /* JPViewController.m */,
 				2D6D13001B0B8CFF0095A435 /* demo.js */,
+				3690EE70212FE1DB0043AF09 /* demo_regex.js */,
 			);
 			path = JSPatchDemo;
 			sourceTree = "<group>";
