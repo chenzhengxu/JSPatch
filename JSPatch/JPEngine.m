@@ -187,6 +187,7 @@ static void (^_exceptionBlock)(NSString *log) = ^void(NSString *log) {
         return defineClass(classDeclaration, instanceMethods, classMethods);
     };
 
+    // 定义protocol
     context[@"_OC_defineProtocol"] = ^(NSString *protocolDeclaration, JSValue *instProtocol, JSValue *clsProtocol) {
         return defineProtocol(protocolDeclaration, instProtocol,clsProtocol);
     };
@@ -205,11 +206,13 @@ static void (^_exceptionBlock)(NSString *log) = ^void(NSString *log) {
         return formatOCToJS([obj toObject]);
     };
     
+    // 获取readObj的属性
     context[@"_OC_getCustomProps"] = ^id(JSValue *obj) {
         id realObj = formatJSToOC(obj);
         return objc_getAssociatedObject(realObj, kPropAssociatedObjectKey);
     };
     
+    // 设置readObj的属性
     context[@"_OC_setCustomProps"] = ^(JSValue *obj, JSValue *val) {
         id realObj = formatJSToOC(obj);
         objc_setAssociatedObject(realObj, kPropAssociatedObjectKey, val, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -423,6 +426,16 @@ static const void *propKey(NSString *propName) {
     }
     return (__bridge const void *)(key);
 }
+
+/**
+ *  获取添加（添加）的成员变量
+ *
+ *  @param slf      发消息的对象
+ *  @param selector 发消息的选择器
+ *  @param propName 获取的成员变量名称
+ *
+ *  @return 成员变量（空）
+ */
 static id getPropIMP(id slf, SEL selector, NSString *propName) {
     return objc_getAssociatedObject(slf, propKey(propName));
 }
@@ -447,6 +460,7 @@ static char *methodTypesInProtocol(NSString *protocolName, NSString *selectorNam
     return NULL;
 }
 
+// runtime注册一个protocol
 static void defineProtocol(NSString *protocolDeclaration, JSValue *instProtocol, JSValue *clsProtocol)
 {
     const char *protocolName = [protocolDeclaration UTF8String];
@@ -547,11 +561,20 @@ static void addMethodToProtocol(Protocol* protocol, NSString *selectorName, NSSt
     protocol_addMethodDescription(protocol, sel, type, YES, isInstance);
 }
 
+/**
+ *  用js方法替换OC类中的实例方法和类方法
+ *
+ *  @param classDeclaration 类名:父类名<协议名,协议名...>   这种格式的字符串
+ *  @param instanceMethods  需要替换的实例方法名以及js方法实现的字典
+ *  @param classMethods     需要替换的类方法名以及js方法实现的字典
+ *
+ *  @return @{@"cls": className} 格式的字典，className表示需要替换方法的类名
+ */
 static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMethods, JSValue *classMethods)
 {
     NSScanner *scanner = [NSScanner scannerWithString:classDeclaration];
     
-    // 获取到类名 父类名 协议名
+    // 通过NSScanner扫描字符classDeclaration，分别给className，superClassName，protocolNames赋值
     NSString *className;
     NSString *superClassName;
     NSString *protocolNames;
@@ -565,15 +588,15 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
         }
     }
     
+    // 将遵守的协议解析用数组protocols保存
     if (!superClassName) superClassName = @"NSObject";
     className = trim(className);
     superClassName = trim(superClassName);
     
     NSArray *protocols = [protocolNames length] ? [protocolNames componentsSeparatedByString:@","] : nil;
     
-    // 字符串解析完毕 开始反射
+    // 通过className在runtime获得类对象，如cls在内存中不存在，则根据className，superClassName通过runtime创建这个类对象并在内存中注册一个新的类
     Class cls = NSClassFromString(className);
-    // 如果不是已有的类，就根据父类注册一个新类
     if (!cls) {
         Class superCls = NSClassFromString(superClassName);
         if (!superCls) {
@@ -592,31 +615,44 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
         }
     }
     
-    // 第一遍加实例方法 第二遍加类方法
+    // i = 0，遍历需要替换的实例方法字典；如果 i = 1，遍历需要替换的类方法字典
     for (int i = 0; i < 2; i ++) {
+        // 如果i==0，则isInstance为yes
         BOOL isInstance = i == 0;
+        // 如果isInstance为yes，则取实例方法组，否则取类方法组
         JSValue *jsMethods = isInstance ? instanceMethods: classMethods;
         
+        // 要增加方法的Class，如果isInstance为yes取cls，否则取cls的元类
         Class currCls = isInstance ? cls: objc_getMetaClass(className.UTF8String);
         // 方法是方法名加上数组 数组内第一个参数是方法参数个数
         NSDictionary *methodDict = [jsMethods toDictionary];
+        // 遍历方法对象字典
         for (NSString *jsMethodName in methodDict.allKeys) {
             JSValue *jsMethodArr = [jsMethods valueForProperty:jsMethodName];
             int numberOfArg = [jsMethodArr[0] toInt32];
+            // 将js的方法名转化为OC的方法名
             NSString *selectorName = convertJPSelectorString(jsMethodName);
             
+            // 补上最后缺少的":"号
             if ([selectorName componentsSeparatedByString:@":"].count - 1 < numberOfArg) {
                 selectorName = [selectorName stringByAppendingString:@":"];
             }
             
+            // 取出js方法对象
             JSValue *jsMethod = jsMethodArr[1];
+            // 判断当前类是否可以相应选择子
             if (class_respondsToSelector(currCls, NSSelectorFromString(selectorName))) {
+                // 用js方法替换OC方法实现
                 overrideMethod(currCls, selectorName, jsMethod, !isInstance, NULL);
             } else {
                 BOOL overrided = NO;
+                // 遍历遵守的协议数组
                 for (NSString *protocolName in protocols) {
+                    // 判断协议中是否包含某个对象必须实现的方法，如果包含则得到方法的类型编码
                     char *types = methodTypesInProtocol(protocolName, selectorName, isInstance, YES);
+                    // 判断协议中是否包含某个对象可选实现的方法，如果包含则得到方法的类型编码
                     if (!types) types = methodTypesInProtocol(protocolName, selectorName, isInstance, NO);
+                    // 如果在协议中找到该方法，用js方法替换OC方法的实现
                     if (types) {
                         overrideMethod(currCls, selectorName, jsMethod, !isInstance, types);
                         free(types);
@@ -624,12 +660,16 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
                         break;
                     }
                 }
+                // 如果实例对象不能响应此SEL，遵守的协议中也没有此方法，那么直接在类中添加方法，方法实现为空，用js方法替换此OC方法
                 if (!overrided) {
+                    // 方法名以“_”开头不作处理
                     if (![[jsMethodName substringToIndex:1] isEqualToString:@"_"]) {
+                        // 第一个@表示返回值为对象，第二个@表示默认的执行对象，第三个:表示执行的SEL
                         NSMutableString *typeDescStr = [@"@@:" mutableCopy];
                         for (int i = 0; i < numberOfArg; i ++) {
                             [typeDescStr appendString:@"@"];
                         }
+                        // 用js方法替换OC方法的实现
                         overrideMethod(currCls, selectorName, jsMethod, !isInstance, [typeDescStr cStringUsingEncoding:NSUTF8StringEncoding]);
                     }
                 }
@@ -637,7 +677,9 @@ static NSDictionary *defineClass(NSString *classDeclaration, JSValue *instanceMe
         }
     }
     
+    // 为cls添加找到关联成员变量的方法
     class_addMethod(cls, @selector(getProp:), (IMP)getPropIMP, "@@:@");
+
     class_addMethod(cls, @selector(setProp:forKey:), (IMP)setPropIMP, "v@:@@");
 
     return @{@"cls": className, @"superCls": superClassName};
@@ -1766,6 +1808,7 @@ static BOOL blockTypeIsScalarPointer(NSString *typeString)
 
 // alertView_willDismissWithButtonIndex => alertView:willDismissWithButtonIndex
 // "__"双下划线代替成"_"单下划线，"_"单下划线代替成":"
+// 将jsMethodName的js方法名转化为OC方法名 类似js方法名是sdf_sfsdf_fsadg_fsag_fasd，转化之后变成sdf:sfsdf:fsadg:fsag:fasd
 static NSString *convertJPSelectorString(NSString *selectorString)
 {
     NSString *tmpJSMethodName = [selectorString stringByReplacingOccurrencesOfString:@"__" withString:@"-"];
@@ -1775,6 +1818,13 @@ static NSString *convertJPSelectorString(NSString *selectorString)
 
 #pragma mark - Object format
 
+/**
+ *  obj如果是string，dictionary，array就装箱之后通过 _wrapObj 标识对象返回； obj如果是 NSNumber 等基本数据类型或者是 JSValue 类型直接返回； 普通对象通过 _wrapObj 标识对象
+ *
+ *  @param obj 经过JPBoxing初步包装的OC对象
+ *
+ *  @return 最终需要包装成的模样 假设源OC对象obj  基本数据NSBumber.obj
+ */
 static id formatOCToJS(id obj)
 {
     if ([obj isKindOfClass:[NSString class]] || [obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDate class]]) {
@@ -1789,6 +1839,13 @@ static id formatOCToJS(id obj)
     return _wrapObj(obj);
 }
 
+/**
+ *  将JSValue转化成id类型OC对象，
+ *
+ *  @param jsval JSValue对象
+ *
+ *  @return id类型OC对象
+ */
 static id formatJSToOC(JSValue *jsval)
 {
     id obj = [jsval toObject];
@@ -1827,6 +1884,13 @@ static id formatJSToOC(JSValue *jsval)
     return obj;
 }
 
+/**
+ *  将OC对象（也可是经过JPBoxing包装的OC对象）数组转化为js对象数组
+ *
+ *  @param list OC对象数组
+ *
+ *  @return JS对象数组
+ */
 static id _formatOCToJSList(NSArray *list)
 {
     NSMutableArray *arr = [NSMutableArray new];
@@ -1836,6 +1900,13 @@ static id _formatOCToJSList(NSArray *list)
     return arr;
 }
 
+/**
+ *  通过字典包装标记OC对象
+ *
+ *  @param obj OC对象
+ *
+ *  @return 字典包装标识后的对象
+ */
 static NSDictionary *_wrapObj(id obj)
 {
     if (!obj || obj == _nilObj) {
@@ -1844,6 +1915,13 @@ static NSDictionary *_wrapObj(id obj)
     return @{@"__obj": obj, @"__clsName": NSStringFromClass([obj isKindOfClass:[JPBoxing class]] ? [[((JPBoxing *)obj) unbox] class]: [obj class])};
 }
 
+/**
+ *  拆开箱子后标识为OC对象
+ *
+ *  @param OC对象
+ *
+ *  @return 标识为OC对象
+ */
 static id _unboxOCObjectToJS(id obj)
 {
     if ([obj isKindOfClass:[NSArray class]]) {

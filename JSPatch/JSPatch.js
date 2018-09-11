@@ -5,22 +5,33 @@ var global = this
   var _ocCls = {};
   var _jsCls = {};
 
+  /**
+   将OC对象遍历format为js对象
+   */
   var _formatOCToJS = function(obj) {
     if (obj === undefined || obj === null) return false
+    // 如果是js对象
     if (typeof obj == "object") {
+      // 如果从OC对象转化而来
       if (obj.__obj) return obj
+      // 如果对象为空
       if (obj.__isNil) return false
     }
+    // 如果对象是Array
     if (obj instanceof Array) {
       var ret = []
+      // 遍历数组将每一个OC对象转化为js对象
       obj.forEach(function(o) {
         ret.push(_formatOCToJS(o))
       })
       return ret
     }
+    // 如果对象是Function
     if (obj instanceof Function) {
         return function() {
+            // 将参数arguments转成数组
             var args = Array.prototype.slice.call(arguments)
+            // 调用OC方法，将参数转为OC对象
             var formatedArgs = _OC_formatJSToOC(args)
             for (var i = 0; i < args.length; i++) {
                 if (args[i] === null || args[i] === undefined || args[i] === false) {
@@ -29,9 +40,11 @@ var global = this
                 formatedArgs.splice(i, 1, null)
             }
         }
+        // 执行obj方法，并调用OC方法将返回值format成js对象
         return _OC_formatOCToJS(obj.apply(obj, formatedArgs))
       }
     }
+    // 如果obj是Object的衍生对象，则通过递归将obj对象的每个属性对象都转化为js对象
     if (obj instanceof Object) {
       var ret = {}
       for (var key in obj) {
@@ -143,7 +156,7 @@ var global = this
   }
 
   /*
-   定义方法
+   将js方法用newMethods对象以newMethods[methodName] = [方法参数个数,方法体对象]的结构保存
    
    @param methods 旧方法
    @param newMethods 新方法
@@ -172,6 +185,7 @@ var global = this
     }
   }
 
+  // 包装方法实现
   var _wrapLocalMethod = function(methodName, func, realClsName) {
     return function() {
       var lastSelf = global.self
@@ -183,6 +197,7 @@ var global = this
     }
   }
 
+  // 设置类的实例方法和类方法
   var _setupJSMethod = function(className, methods, isInst, realClsName) {
     for (var name in methods) {
       var key = isInst ? 'instMethods': 'clsMethods',
@@ -261,6 +276,7 @@ var global = this
     _formatDefineMethods(instMethods, newInstMethods, realClsName)
     _formatDefineMethods(clsMethods, newClsMethods, realClsName)
 
+    // 在OC端建立class，实例方法以及类方法，返回值为类名和父类名
     var ret = _OC_defineClass(declaration, newInstMethods, newClsMethods)
     var className = ret['cls']
     var superCls = ret['superCls']
@@ -270,6 +286,7 @@ var global = this
       clsMethods: {},
     }
 
+    // 如果存在父类的class，将父类的方法名同步到子类
     if (superCls.length && _ocCls[superCls]) {
       for (var funcName in _ocCls[superCls]['instMethods']) {
         _ocCls[className]['instMethods'][funcName] = _ocCls[superCls]['instMethods'][funcName]
@@ -279,12 +296,14 @@ var global = this
       }
     }
 
+    // 将实例方法和类方法添加到_ocCls[className]
     _setupJSMethod(className, instMethods, 1, realClsName)
     _setupJSMethod(className, clsMethods, 0, realClsName)
 
     return require(className)
   }
 
+  // 定义protocol
   global.defineProtocol = function(declaration, instProtos , clsProtos) {
       var ret = _OC_defineProtocol(declaration, instProtos,clsProtos);
       return ret
