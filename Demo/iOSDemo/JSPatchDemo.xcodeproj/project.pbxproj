@@ -28,6 +28,7 @@
 		3646F8B41CA0F89C00E10774 /* JPLocker.m in Sources */ = {isa = PBXBuildFile; fileRef = 3646F8B31CA0F89C00E10774 /* JPLocker.m */; };
 		3660BC2D1E2634C900DB3765 /* JPBlock.m in Sources */ = {isa = PBXBuildFile; fileRef = 3660BC2C1E2634C900DB3765 /* JPBlock.m */; };
 		367650481E2CC3BD00828E12 /* JPBlockWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 367650471E2CC3BD00828E12 /* JPBlockWrapper.m */; };
+		368078FB2148E30200ED645D /* demo1.js in Resources */ = {isa = PBXBuildFile; fileRef = 368078FA2148E30200ED645D /* demo1.js */; };
 		369EC2971C9925A400334A64 /* JPSpecialInit.m in Sources */ = {isa = PBXBuildFile; fileRef = 369EC2961C9925A400334A64 /* JPSpecialInit.m */; };
 		36B3252D1E290D0C006945DF /* JPMethodSignature.m in Sources */ = {isa = PBXBuildFile; fileRef = 36B3252C1E290D0C006945DF /* JPMethodSignature.m */; };
 		36C59D611E4B517B00A40835 /* libffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 36C59D601E4B517B00A40835 /* libffi.a */; };
@@ -91,6 +92,7 @@
 		3660BC2C1E2634C900DB3765 /* JPBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPBlock.m; sourceTree = "<group>"; };
 		367650461E2CC3BD00828E12 /* JPBlockWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPBlockWrapper.h; sourceTree = "<group>"; };
 		367650471E2CC3BD00828E12 /* JPBlockWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPBlockWrapper.m; sourceTree = "<group>"; };
+		368078FA2148E30200ED645D /* demo1.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = demo1.js; sourceTree = "<group>"; };
 		3690EE70212FE1DB0043AF09 /* demo_regex.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = demo_regex.js; sourceTree = "<group>"; };
 		369EC2951C9925A400334A64 /* JPSpecialInit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPSpecialInit.h; sourceTree = "<group>"; };
 		369EC2961C9925A400334A64 /* JPSpecialInit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPSpecialInit.m; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 				2D5D891D1B0B8BFF009382EC /* JPViewController.h */,
 				2D5D891E1B0B8BFF009382EC /* JPViewController.m */,
 				2D6D13001B0B8CFF0095A435 /* demo.js */,
+				368078FA2148E30200ED645D /* demo1.js */,
 				3690EE70212FE1DB0043AF09 /* demo_regex.js */,
 			);
 			path = JSPatchDemo;
@@ -444,6 +447,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				368078FB2148E30200ED645D /* demo1.js in Resources */,
 				3613C3871C6329F300E915CB /* JSPatch.js in Resources */,
 				3613C38F1C6329F300E915CB /* packer.php in Resources */,
 				2D6D12FD1B0B8CF20095A435 /* Images.xcassets in Resources */,

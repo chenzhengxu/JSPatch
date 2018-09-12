@@ -15,9 +15,6 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
     [JPEngine startEngine];
-    NSString *sourcePath = [[NSBundle mainBundle] pathForResource:@"demo" ofType:@"js"];
-    NSString *script = [NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:nil];
-    [JPEngine evaluateScript:script];
     
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     JPViewController *rootViewController = [[JPViewController alloc] init];
@@ -25,7 +22,24 @@
     self.window.rootViewController = navigationController;
     [self.window makeKeyAndVisible];
     
+    UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(0, 20, 100, 40)];
+    btn.backgroundColor = [UIColor yellowColor];
+    CGPoint point = btn.center;
+    point.x = self.window.center.x;
+    btn.center = point;
+    [btn setTitle:@"patch" forState:UIControlStateNormal];
+    [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [btn addTarget:self action:@selector(clickBtn) forControlEvents:UIControlEventTouchUpInside];
+    [self.window addSubview:btn];
+    
     [[UINavigationBar appearance] setBackgroundImage:nil forBarMetrics:UIBarMetricsCompact];
     return YES;
 }
+
+- (void)clickBtn {
+    NSString *sourcePath = [[NSBundle mainBundle] pathForResource:@"demo1" ofType:@"js"];
+    NSString *script = [NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:nil];
+    [JPEngine evaluateScript:script];
+}
+
 @end

@@ -23,7 +23,7 @@ defineClass('JPTableViewController : UITableViewController <UIAlertViewDelegate>
     return self.dataSource().length;
   },
   tableView_cellForRowAtIndexPath: function(tableView, indexPath) {
-    var cell = tableView.dequeueReusableCellWithIdentifier("cell") 
+    var cell = tableView.dequeueReusableCellWithIdentifier("cell")
     if (!cell) {
       cell = require('UITableViewCell').alloc().initWithStyle_reuseIdentifier(0, "cell")
     }

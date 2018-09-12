@@ -1,8 +1,10 @@
 var global = this
 
 ;(function() {
-
+  
+  // 保存OCclass
   var _ocCls = {};
+  // 保存jsclass
   var _jsCls = {};
 
   /**
@@ -55,7 +57,7 @@ var global = this
     return obj
   }
   
-  // js调用oc方法
+  // js调用oc方法 并将返回值转化为js对象
   var _methodFunc = function(instance, clsName, methodName, args, isSuper, isPerformSelector) {
     var selectorName = methodName
     if (!isPerformSelector) {
@@ -67,6 +69,7 @@ var global = this
         selectorName += ":"
       }
     }
+    // 如果instance为yes，则为实例方法调用，否则为类方法调用
     var ret = instance ? _OC_callI(instance, selectorName, args, isSuper):
                          _OC_callC(clsName, selectorName, args)
     return _formatOCToJS(ret)
